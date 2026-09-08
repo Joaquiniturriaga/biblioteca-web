@@ -1,9 +1,12 @@
 <header>
   <h1>Biblioteca</h1>
-  <nav>
-    <a routerLink="/libros" routerLinkActive="activo">Catálogo</a>
+<nav>
+  <a routerLink="/libros" routerLinkActive="activo">Catálogo</a>
+  @if (esBibliotecario()) {
     <a routerLink="/prestamos" routerLinkActive="activo">Préstamos</a>
-  </nav>
+  }
+</nav>
+        <button (click)="entrar()">Entrar</button>
 
   <!--
     🔨 TRAMO 8.4 · Acá va el botón de login:
