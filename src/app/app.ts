@@ -1,8 +1,14 @@
 
-import { Component, signal } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { Component, inject, signal } from '@angular/core';
 import { RouterOutlet, RouterLink, RouterLinkActive } from '@angular/router';
 import { signInWithRedirect, fetchAuthSession } from 'aws-amplify/auth';
 import { Hub } from 'aws-amplify/utils';
+
+type PrestamoConLibro = {
+  id: number; desde: string; hasta: string; devuelto: boolean;
+  libro: { id: number; titulo: string; autor: string };
+};
 
 @Component({
   selector: 'app-root',
@@ -13,6 +19,11 @@ import { Hub } from 'aws-amplify/utils';
 export class App {
   // La caja que mira la plantilla. Empieza en false: sin sesión, no eres nadie.
   protected readonly esBibliotecario = signal(false);
+
+  // L4 · El panel en UNA llamada: el BFF ya cruzó préstamos con libros.
+  private readonly http = inject(HttpClient);
+  readonly panel = signal<PrestamoConLibro[]>([]);
+  readonly cargando = signal(false);
 
   constructor() {
     this.revisarGrupos();
@@ -32,5 +43,15 @@ export class App {
 
   protected async entrar() {
     await signInWithRedirect();
+  }
+
+  cargarPanel(): void {
+    this.cargando.set(true);
+    this.http
+      .get<{ prestamos: PrestamoConLibro[] }>('http://localhost:8080/v1/panel')
+      .subscribe({
+        next: (r) => { this.panel.set(r.prestamos); this.cargando.set(false); },
+        error: (e) => { console.error('el panel fallo:', e.status, e.error); this.cargando.set(false); },
+      });
   }
 }
